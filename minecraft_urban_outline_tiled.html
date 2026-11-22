@@ -77,7 +77,7 @@ async function getOverpass(query){
 }
 function latFromMeters(sw,y){return sw.lat+(y/6378137)*180/Math.PI}
 function lonFromMeters(sw,x){return sw.lng+(x/(6378137*Math.cos(sw.lat*Math.PI/180)))*180/Math.PI}
-document.getElementById('cancel').onclick=()=>{cancelRequested=true;statusEl.textContent+='\\n中止要求を受け付けました。現在の通信が終わり次第停止します。'};
+document.getElementById('cancel').onclick=()=>{cancelRequested=true;statusEl.textContent+='\n中止要求を受け付けました。現在の通信が終わり次第停止します。'};
 document.getElementById('build').onclick=async()=>{
  if(corners.length!==2){statusEl.textContent='先に地図上で範囲の角を2点タップしてください。';return}
  const sw={lat:Math.min(corners[0].lat,corners[1].lat),lng:Math.min(corners[0].lng,corners[1].lng)},ne={lat:Math.max(corners[0].lat,corners[1].lat),lng:Math.max(corners[0].lng,corners[1].lng)};
@@ -96,7 +96,7 @@ document.getElementById('build').onclick=async()=>{
    const south=latFromMeters(sw,z0),north=latFromMeters(sw,z1),west=lonFromMeters(sw,x0),east=lonFromMeters(sw,x1);
    const bb=`${south},${west},${north},${east}`;
    const query=`[out:json][timeout:60];(way["building"](${bb});way["highway"](${bb});way["railway"~"^(rail|light_rail|subway|tram|monorail|narrow_gauge)$"](${bb}););out body;>;out skel qt;`;
-   statusEl.textContent=`地図データ取得中 ${completed+1}/${total} タイル\\n建物・道路・鉄道を順番に処理しています。`;
+   statusEl.textContent=`地図データ取得中 ${completed+1}/${total} タイル\n建物・道路・鉄道を順番に処理しています。`;
    const data=await getOverpass(query),nodes=new Map(),ways=[];
    for(const el of data.elements){if(el.type==='node')nodes.set(el.id,[el.lon,el.lat]);else if(el.type==='way')ways.push(el)}
    const blocks=new Map();
@@ -122,25 +122,25 @@ document.getElementById('build').onclick=async()=>{
    for(let i=0;i<entries.length;i+=batchSize){
     const lines=entries.slice(i,i+batchSize).map(([k,type])=>{const [x,z]=k.split(',').map(Number);return `setblock ${x} ${y} ${z} ${type}`});
     const name=`tile_${String(ty).padStart(3,'0')}_${String(tx).padStart(3,'0')}_batch_${String(Math.floor(i/batchSize)).padStart(3,'0')}`;
-    folder.file(name+'.mcfunction',lines.join('\\n'));functionCount++;
+    folder.file(name+'.mcfunction',lines.join('\n'));functionCount++;
    }
    completed++;progressEl.value=Math.round(completed/total*100);
-   statusEl.textContent=`地図データ取得・変換中 ${completed}/${total} タイル（${progressEl.value}%）\\n建物 ${buildingCount}件／道路 ${roadCount}本／鉄道 ${railCount}本\\n生成済み配置コマンド：約${totalBlocks.toLocaleString()}個`;
+   statusEl.textContent=`地図データ取得・変換中 ${completed}/${total} タイル（${progressEl.value}%）\n建物 ${buildingCount}件／道路 ${roadCount}本／鉄道 ${railCount}本\n生成済み配置コマンド：約${totalBlocks.toLocaleString()}個`;
    await delay(1100);
   }
   zip.file('manifest.json',JSON.stringify(manifest,null,2));
-  let readme=`Minecraft Outline Map - 分割実行版\\n\\nワールド設定でこのビヘイビアーパックを有効にし、チートをオンにしてください。\\n\\n重要：全コマンドを一度に実行しないでください。以下のコマンドをチャット欄に1つずつ入力します。\\n`;
-  readme+=`\\n対象範囲：約${Math.round(width)}m × ${Math.round(height)}m\\n取得タイル：${total}個（最大1km四方ずつ）\\n配置ブロック：${totalBlocks}\\n建物way：${buildingCount}／道路way：${roadCount}／鉄道way：${railCount}\\n1ファイルあたり最大${batchSize}コマンド\\n\\n`;
-  readme+='実行コマンド一覧：\\n';
+  let readme=`Minecraft Outline Map - 分割実行版\n\nワールド設定でこのビヘイビアーパックを有効にし、チートをオンにしてください。\n\n重要：全コマンドを一度に実行しないでください。以下のコマンドをチャット欄に1つずつ入力します。\n`;
+  readme+=`\n対象範囲：約${Math.round(width)}m × ${Math.round(height)}m\n取得タイル：${total}個（最大1km四方ずつ）\n配置ブロック：${totalBlocks}\n建物way：${buildingCount}／道路way：${roadCount}／鉄道way：${railCount}\n1ファイルあたり最大${batchSize}コマンド\n\n`;
+  readme+='実行コマンド一覧：\n';
   const names=Object.keys(folder.files).filter(n=>n.endsWith('.mcfunction')).map(n=>n.split('/').pop().replace('.mcfunction','')).sort();
-  for(const name of names)readme+=`/function outline_map/${name}\\n`;
-  readme+='\\n座標は選択範囲の南西端付近を基準にしています。必要に応じてワールド内で /tp @s 0 70 0 付近へ移動して確認してください。実行済みコマンドをメモしておけば、未実行分から再開できます。\\n';
+  for(const name of names)readme+=`/function outline_map/${name}\n`;
+  readme+='\n座標は選択範囲の南西端付近を基準にしています。必要に応じてワールド内で /tp @s 0 70 0 付近へ移動して確認してください。実行済みコマンドをメモしておけば、未実行分から再開できます。\n';
   zip.file('README.txt',readme);
-  statusEl.textContent+=`\\n.mcpackを圧縮中…`;
-  packBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE'},meta=>{statusEl.textContent=`圧縮中 ${Math.round(meta.percent)}%\\n配置ブロック：約${totalBlocks.toLocaleString()}個`});
-  statusEl.textContent=`生成完了！\\n取得タイル：${total}/${total}個\\n建物 ${buildingCount}件／道路 ${roadCount}本／鉄道 ${railCount}本\\n配置ブロック：約${totalBlocks.toLocaleString()}個\\nコマンドファイル：${functionCount}個\\nREADME.txtに実行コマンド一覧があります。`;
+  statusEl.textContent+=`\n.mcpackを圧縮中…`;
+  packBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE'},meta=>{statusEl.textContent=`圧縮中 ${Math.round(meta.percent)}%\n配置ブロック：約${totalBlocks.toLocaleString()}個`});
+  statusEl.textContent=`生成完了！\n取得タイル：${total}/${total}個\n建物 ${buildingCount}件／道路 ${roadCount}本／鉄道 ${railCount}本\n配置ブロック：約${totalBlocks.toLocaleString()}個\nコマンドファイル：${functionCount}個\nREADME.txtに実行コマンド一覧があります。`;
   downloadBtn.disabled=false;
- }catch(e){packBlob=null;statusEl.textContent='処理を停止しました：'+(e.message||String(e))+'\\n範囲を小さくして再試行してください。';}
+ }catch(e){packBlob=null;statusEl.textContent='処理を停止しました：'+(e.message||String(e))+'\n範囲を小さくして再試行してください。';}
  finally{document.getElementById('build').disabled=false;document.getElementById('cancel').disabled=true}
 };
 downloadBtn.onclick=()=>{if(!packBlob)return;const url=URL.createObjectURL(packBlob),a=document.createElement('a');a.href=url;a.download='Minecraft_Outline_Map_Tiled.mcpack';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)};
