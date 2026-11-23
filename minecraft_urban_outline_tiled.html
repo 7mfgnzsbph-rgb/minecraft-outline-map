@@ -88,7 +88,7 @@ document.getElementById('build').onclick=async()=>{
  const scale=Number(document.getElementById('scale').value),y=Number(document.getElementById('y').value),batchSize=Number(document.getElementById('batch').value);
  const nx=Math.ceil(width/1000),ny=Math.ceil(height/1000),total=nx*ny,zip=new JSZip(),folder=zip.folder('functions').folder('outline_map');
  let totalBlocks=0,buildingCount=0,roadCount=0,railCount=0,functionCount=0,completed=0;
- const manifest={format_version:2,header:{name:'Outline Map - Tiled',description:'Tiled flat outline map generated from OpenStreetMap',uuid:crypto.randomUUID(),version:[1,0,0]},modules:[{type:'data',uuid:crypto.randomUUID(),version:[1,0,0]}]};
+ const manifest={format_version:2,header:{name:'Outline Map - Tiled',description:'Tiled flat outline map generated from OpenStreetMap',uuid:crypto.randomUUID(),version:[1,0,0],min_engine_version:[1,20,0]},modules:[{type:'data',uuid:crypto.randomUUID(),version:[1,0,0]}]};
  try{
   for(let ty=0;ty<ny;ty++)for(let tx=0;tx<nx;tx++){
    if(cancelRequested)throw Error('ユーザーによって中止されました。今回の生成は完了していません。');
